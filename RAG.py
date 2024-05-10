@@ -89,12 +89,25 @@ def main():
 
     if st.button("Transcribe Audio"):
         raw_text = get_audio_text(audio_files)
+        st.session_state.raw_text = raw_text
         st.write(f"Transcribed Text: \n{raw_text}")
     
     if st.button("Download Transcribed Text"):
-        with open("transcribed_text.txt", "w") as file:
-            file.write(raw_text)
-        st.success("Transcribed text downloaded successfully")
+        if "raw_text" in st.session_state:
+            raw_text = st.session_state.raw_text
+            file_path = "transcribed_text.txt"
+            with open(file_path, "w") as file:
+                file.write(raw_text)
+            st.success("Transcribed text downloaded successfully")
+
+        # Download the file
+            with open(file_path, "rb") as file:
+                st.download_button(label='Click to download',
+                               data=file,
+                               file_name="transcribed_text.txt",
+                               mime="text/plain")
+        else:
+            st.warning("Transcribed text is not available. Please transcribe the audio first.")
     
     if audio_files is not None:
         st.audio(audio_files)
