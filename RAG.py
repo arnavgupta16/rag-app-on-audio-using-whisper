@@ -1,54 +1,104 @@
-import os
-import openai
-import speech_recognition as sr
-from dotenv import load_dotenv
-import base64
 import streamlit as st
-# Load your OpenAI key
+from dotenv import load_dotenv
+from langchain.text_splitter import CharacterTextSplitter
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.vectorstores import FAISS
+from langchain.chat_models import ChatOpenAI
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationalRetrievalChain
+import streamlit as st
+import openai
+import os
+import speech_recognition as sr
 load_dotenv()
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
-st.set_page_config(page_title="Chat with audio AI")
-st.header("Ask Your audio📄")
-audio_file = st.file_uploader("Upload your audio", type=['wav'])
-
-def transcribe_audio(audio_file):
-    # Use the default SpeechRecognition recognizer
+def get_audio_text(audio_files):
     r = sr.Recognizer()
-    with sr.AudioFile(audio_file) as source:
+    with sr.AudioFile(audio_files) as source:
         audio_data = r.record(source)
         text = r.recognize_whisper(audio_data)
+        
     return text
 
-def text_to_download_link(text, filename, title):
-    b64 = base64.b64encode(text.encode()).decode()
-    return f'<a href="data:file/txt;base64,{b64}" download="{filename}">{title}</a>'
+def get_text_chunks(text, chunk_size=100, chunk_overlap=20):
+    chunks = []
+    start = 0
+    end = chunk_size
+    while end < len(text):
+        chunks.append(text[start:end])
+        start += chunk_size - chunk_overlap
+        end += chunk_size - chunk_overlap
+    chunks.append(text[start:])
+    return chunks
 
-if audio_file is not None:
-    # Show audio player
-    st.audio(audio_file, format='audio/wav')
 
-    # Add transcribe button
-    if st.button('Transcribe'):
-        transcription = transcribe_audio((audio_file))
-        st.write(transcription)
-        st.markdown(text_to_download_link(transcription, "transcription.txt", "Download transcription"), unsafe_allow_html=True)
+def get_vectorstore(text_chunks):
+    embeddings = OpenAIEmbeddings()
+    vectorstore = FAISS.from_texts(texts=text_chunks, embedding=embeddings)
+    return vectorstore
 
-# Ask a question after the transcription
-query = st.text_input("Ask your Question about your audio")
-if st.button('Submit Query'):
-    with open('transcription.txt', 'r') as f:
-        transcription = f.read()
 
-    # RAG Model
-    from transformers import RagTokenizer, RagRetriever, RagTokenForGeneration
+def get_conversation_chain(vectorstore):
+    llm = ChatOpenAI()
 
-    tokenizer = RagTokenizer.from_pretrained("facebook/rag-token-nq")
-    retriever = RagRetriever.from_pretrained("facebook/rag-token-nq", index_name="exact", use_dummy_dataset=True)
-    model = RagTokenForGeneration.from_pretrained("facebook/rag-token-nq", retriever=retriever)
+    memory = ConversationBufferMemory(
+        memory_key='chat_history', return_messages=True)
+    conversation_chain = ConversationalRetrievalChain.from_llm(
+        llm=llm,
+        retriever=vectorstore.as_retriever(),
+        memory=memory
+    )
+    return conversation_chain
 
-    inputs = tokenizer.prepare_seq2seq_batch(["Question: " + query], return_tensors="pt")
-    generated = model.generate(**inputs)
+def process_question(question, conversation_chain):
+    response = conversation_chain.run(question)
+    return response
 
-    response = tokenizer.batch_decode(generated, skip_special_tokens=True)
-    st.success(response[0])
+def main():
+    load_dotenv()
+    st.set_page_config(page_title="Chat with multiple PDFs",
+                       page_icon=":books:")
+
+    if "conversation" not in st.session_state:
+        st.session_state.conversation = None
+    if "chat_history" not in st.session_state:
+        st.session_state.chat_history = []
+
+    st.header("Chat with multiple PDFs :books:")
+    user_question = st.text_input("Ask your Question about your audio")
+
+    with st.sidebar:
+        st.subheader("Your audio")
+        audio_files = st.file_uploader("Upload your audio", type=['wav'])
+
+        if st.button("Process"):
+            with st.spinner("Processing"):
+                raw_text = get_audio_text(audio_files)
+                st.write(f"Transcribed Text: \n{raw_text}")
+
+                text_chunks = get_text_chunks(raw_text)
+                vectorstore = get_vectorstore(text_chunks)
+
+                st.session_state.conversation = get_conversation_chain(
+                    vectorstore)
+
+    if user_question:
+        st.write(f"You: {user_question}")
+        st.write(f"Bot: {process_question(user_question, st.session_state.conversation)}")
+
+    if st.button("Transcribe Audio"):
+        raw_text = get_audio_text(audio_files)
+        st.write(f"Transcribed Text: \n{raw_text}")
+    
+    if st.button("Download Transcribed Text"):
+        with open("transcribed_text.txt", "w") as file:
+            file.write(raw_text)
+        st.success("Transcribed text downloaded successfully")
+    
+    if audio_files is not None:
+        st.audio(audio_files)
+
+
+if __name__ == '__main__':
+    main()
