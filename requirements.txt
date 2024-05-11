@@ -13,5 +13,4 @@ PyPI
 openai
 whisper
 ffmpeg
-PyTorch
 torch==1.10.0
