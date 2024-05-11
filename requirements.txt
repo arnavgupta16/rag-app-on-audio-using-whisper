@@ -10,3 +10,4 @@ SpeechRecognition
 PyPi
 soundfile
 torch
+whisper
