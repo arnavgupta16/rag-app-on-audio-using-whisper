@@ -12,4 +12,4 @@ torch
 PyPI
 openai
 whisper
-
+ffmpeg
