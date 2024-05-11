@@ -9,4 +9,7 @@ tiktoken==0.4.0
 SpeechRecognition
 soundfile
 torch
+PyPI
+openai
+whisper
 
