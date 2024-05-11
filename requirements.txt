@@ -9,4 +9,4 @@ tiktoken==0.4.0
 SpeechRecognition
 soundfile
 torch
-git+https://github.com/openai/whisper.git whisper
+openai-whisper
