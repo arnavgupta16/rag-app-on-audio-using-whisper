@@ -9,7 +9,7 @@ tiktoken==0.4.0
 SpeechRecognition
 soundfile
 PyPI
-openai
+openai==0.28.0
 whisper
 ffmpeg
 torch
