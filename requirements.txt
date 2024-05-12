@@ -12,4 +12,4 @@ PyPI
 openai
 whisper
 ffmpeg
-torch==1.10.0
+torch
