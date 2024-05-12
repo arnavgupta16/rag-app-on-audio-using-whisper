@@ -75,20 +75,18 @@ def main():
 
   st.header("Chat with multiple PDFs :books:")
   user_question = st.text_input("Ask your Question about your audio")
+  with st.sidebar:
+    st.subheader("Your audio")
+    audio_files = st.file_uploader("Upload your audio", type=['wav'])
 
-    with st.sidebar:
-        st.subheader("Your audio")
-        audio_files = st.file_uploader("Upload your audio", type=['wav'])
+    if st.button("Process"):
+        with st.spinner("Processing"):
+            raw_text = get_audio_text(audio_files)
+            st.write(f"Transcribed Text: \n{raw_text}")
 
-        if st.button("Process"):
-            with st.spinner("Processing"):
-                raw_text = get_audio_text(audio_files)
-                st.write(f"Transcribed Text: \n{raw_text}")
-
-                text_chunks = get_text_chunks(raw_text)
-                vectorstore = get_vectorstore(text_chunks)
-
-                st.session_state.conversation = get_conversation_chain(
+            text_chunks = get_text_chunks(raw_text)
+            vectorstore = get_vectorstore(text_chunks)
+            st.session_state.conversation = get_conversation_chain(
                     vectorstore)
 
     if user_question:
