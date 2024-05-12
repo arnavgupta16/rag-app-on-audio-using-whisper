@@ -10,8 +10,7 @@ import streamlit as st
 import openai
 import os
 import speech_recognition as sr
-load_dotenv()
-openai.api_key =os.environ.get("OPENAI_API_KEY")
+
 
 def get_audio_text(audio_files):
     r = sr.Recognizer()
@@ -56,17 +55,26 @@ def process_question(question, conversation_chain):
     return response
 
 def main():
-    load_dotenv()
-    st.set_page_config(page_title="Chat with multiple PDFs",
-                       page_icon=":books:")
+  # Load environment variables (excluding OpenAI API key for now)
 
-    if "conversation" not in st.session_state:
-        st.session_state.conversation = None
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = []
+  st.set_page_config(page_title="Chat with multiple PDFs",
+                    page_icon=":books:")
 
-    st.header("Chat with multiple PDFs :books:")
-    user_question = st.text_input("Ask your Question about your audio")
+  # Get OpenAI API key from user input
+  openai_api_key = st.text_input("Enter your OpenAI API Key", type="password")
+
+  # Set the OpenAI API key only if a value is entered
+  if openai_api_key:
+      os.environ["OPENAI_API_KEY"] = openai_api_key
+      openai.api_key = openai_api_key
+
+  if "conversation" not in st.session_state:
+      st.session_state.conversation = None
+  if "chat_history" not in st.session_state:
+      st.session_state.chat_history = []
+
+  st.header("Chat with multiple PDFs :books:")
+  user_question = st.text_input("Ask your Question about your audio")
 
     with st.sidebar:
         st.subheader("Your audio")
