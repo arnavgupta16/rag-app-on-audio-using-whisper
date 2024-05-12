@@ -89,16 +89,16 @@ def main():
             st.session_state.conversation = get_conversation_chain(
                     vectorstore)
 
-    if user_question:
+   if user_question:
         st.write(f"You: {user_question}")
         st.write(f"Bot: {process_question(user_question, st.session_state.conversation)}")
 
-    if st.button("Transcribe Audio"):
+   if st.button("Transcribe Audio"):
         raw_text = get_audio_text(audio_files)
         st.session_state.raw_text = raw_text
         st.write(f"Transcribed Text: \n{raw_text}")
     
-    if st.button("Download Transcribed Text"):
+   if st.button("Download Transcribed Text"):
         if "raw_text" in st.session_state:
             raw_text = st.session_state.raw_text
             file_path = "transcribed_text.txt"
@@ -115,7 +115,7 @@ def main():
         else:
             st.warning("Transcribed text is not available. Please transcribe the audio first.")
     
-    if audio_files is not None:
+  if audio_files is not None:
         st.audio(audio_files)
 
 
