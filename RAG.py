@@ -11,7 +11,7 @@ import openai
 import os
 import speech_recognition as sr
 load_dotenv()
-openai.api_key = os.getenv('OPENAI_API_KEY')
+openai.api_key = "sk-proj-bDFgwTu9qYSq1ECDuBbpT3BlbkFJtU6oIjJzRhwmlYk6Fkp2"
 
 def get_audio_text(audio_files):
     r = sr.Recognizer()
